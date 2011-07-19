@@ -17,21 +17,29 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.util.Log;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 public class AndroidSensorLoggerActivity extends Activity implements LocationListener{
 	private LocationManager lm;
 	private TextView tv;
+	final surfaceViewer mySurfaceViewer = new surfaceViewer(this);
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    	
+    	FrameLayout preview = new FrameLayout(this);
+    	preview.addView(mySurfaceViewer);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         tv = (TextView) findViewById(R.id.gpstext);
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500, 1, this);
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10, this);
         tv.setText("Initializing...");
     }
+    
+    
+    
     public void onLocationChanged(Location arg0) {
         String lat = String.valueOf(arg0.getLatitude()); //lat is retrieved 
         String lon = String.valueOf(arg0.getLongitude()); //lon is retrieved
@@ -39,7 +47,7 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         try {
 			// Writes the lat and lon every time a new location is observed.
         	SaveData(lat, lon, "LocationData.csv");
-			
+			 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
