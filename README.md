@@ -10,5 +10,7 @@ As part of the class, students are to launch a high altitude weather balloon wit
 
 ##Actions (In Progress)##
 
+BEN WAS HERE
+
 * Take pictures at definable intervals.
 * Take video at definable intervals.`
