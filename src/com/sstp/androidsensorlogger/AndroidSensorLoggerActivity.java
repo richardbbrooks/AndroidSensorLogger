@@ -17,19 +17,15 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.util.Log;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 public class AndroidSensorLoggerActivity extends Activity implements LocationListener{
 	private LocationManager lm;
 	private TextView tv;
-	final surfaceViewer mySurfaceViewer = new surfaceViewer(this);
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    	
-    	FrameLayout preview = new FrameLayout(this);
-    	preview.addView(mySurfaceViewer);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         tv = (TextView) findViewById(R.id.gpstext);
