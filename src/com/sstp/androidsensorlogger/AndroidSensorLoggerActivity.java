@@ -9,8 +9,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.TimeZone;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -41,20 +44,24 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         tv.setText("Initializing...");
         mTts = new TextToSpeech(this, this);
     }
-    
+
     public void onLocationChanged(Location arg0) {
         String lat = String.valueOf(arg0.getLatitude()); //lat is retrieved 
         String lon = String.valueOf(arg0.getLongitude()); //lon is retrieved
         tv.setText("lat="+lat+", lon="+lon);
+        SimpleDateFormat utc = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
+        utc.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String utcTime = utc.format(new Date());
         try {
 			// Writes the lat and lon every time a new location is observed.
-        	SaveData(lat, lon, "LocationData.csv");
+        	SaveData(lat, lon, utcTime, "LocationData.csv");
         	// Speaks out new line
         	speakData(new File(Environment.getExternalStorageDirectory()+"/LocationData.csv"));
         	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
     }
     public void onProviderDisabled(String arg0) {
         Log.e("GPS", "provider disabled " + arg0);
@@ -66,7 +73,7 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         Log.e("GPS", "status changed to " + arg0 + " [" + arg1 + "]");
     }
      
-    public void SaveData(String lat, String lon, String fileLocation) throws Exception
+    public void SaveData(String lat, String lon, String time, String fileLocation) throws Exception
 	{
     	
     	// **SIDE NOTE 2: In order to write/read into the SD card, a permission script has to be added to the 
@@ -78,7 +85,7 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
 		        File gpxfile = new File(root, fileLocation);
 		        FileWriter gpxwriter = new FileWriter(gpxfile, true);
 		        CSVWriter out = new CSVWriter(gpxwriter);
-		        String[] log = new String[] {lat, lon};
+		        String[] log = new String[] {lat, lon, time};
 		        out.writeNext(log);
 		        out.flush();
 		       
@@ -129,9 +136,7 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
 		}
     	String s = "";
     	while (in.hasNextLine())
-    	{
     		s = in.nextLine(); // overwrites s so always speaks last line (the new data)
-    	}
     	mTts.speak(s, TextToSpeech.QUEUE_FLUSH, null);
     }
 }
