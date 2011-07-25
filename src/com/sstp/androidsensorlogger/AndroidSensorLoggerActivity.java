@@ -5,20 +5,19 @@ package com.sstp.androidsensorlogger;
  */
 
 import au.com.bytecode.opencsv.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Locale;
-import java.util.Scanner;
-import java.util.Date;
+
+import java.io.*;
+import java.util.*;
 import java.text.SimpleDateFormat;
-import java.util.TimeZone;
+import java.lang.Double;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.hardware.Camera;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -32,6 +31,12 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
 	private TextView tv;
     private TextToSpeech mTts;
     private static final String TAG = "TextToSpeechDemo";
+    private final String[] encodedLetters = new String [] {
+    "ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", "INDIA",
+    "JULIET", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", "QUEBEC", "ROMEO", 
+    "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", "X-RAY", "YANKEE", "ZULU"
+    };
+    private ArrayList<String> chosenEncoding = new ArrayList<String>();
 
 	/** Called when the activity is first created. */
     @Override
@@ -43,13 +48,42 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this);
         tv.setText("Initializing...");
         mTts = new TextToSpeech(this, this);
+        takePic();
+        /* Used for determining which NATO Values to use
+         * int choice = Integer.MIN_VALUE;
+        Random rand = new Random();
+        for (int n = 0; n <= 9; n++) {
+        	choice = rand.nextInt(26);
+        	chosenEncoding.add(encodedLetters[choice]);
+        	}
+         */
+        
+        // These values were chosen:
+        chosenEncoding.add("SIERRA");
+        chosenEncoding.add("YANKEE");
+        chosenEncoding.add("ALPHA");
+        chosenEncoding.add("VICTOR");
+        chosenEncoding.add("INDIA");
+        chosenEncoding.add("QUEBEC");
+        chosenEncoding.add("WHISKEY");
+        chosenEncoding.add("PAPA");
+        chosenEncoding.add("KILO");
+        chosenEncoding.add("MIKE");
+    }
+     
+    public void takePic()
+    {	
+        CameraTimer ct = new CameraTimer();
+        new Timer().scheduleAtFixedRate(ct, 5000, 5000);
     }
     
-
     public void onLocationChanged(Location arg0) {
-        String lat = String.valueOf(arg0.getLatitude()); //lat is retrieved 
-        String lon = String.valueOf(arg0.getLongitude()); //lon is retrieved
-        String alt = String.valueOf(arg0.getAltitude()); //alt is retrieved
+    	double lat1 = arg0.getLatitude();
+    	double lon1 = arg0.getLongitude();
+    	double alt1 = arg0.getAltitude();
+        String lat = String.format("%.5f",lat1); //lat is retrieved and rounded to 5 places
+        String lon = String.format("%.5f",lon1); //lon is retrieved
+        String alt = String.format("%.5f",alt1); //alt is retrieved
         tv.setText("lat="+lat+", lon="+lon + ", alt="+alt);
         SimpleDateFormat utc = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
         utc.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -63,8 +97,8 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         } catch (Exception e) {
 			e.printStackTrace();
 		}
-
     }
+    
     public void onProviderDisabled(String arg0) {
         Log.e("GPS", "provider disabled " + arg0);
     }
@@ -130,7 +164,7 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
     
     public void speakData(File f)
     {
-    	Scanner in = null;
+     	Scanner in = null;
 		try {
 			in = new Scanner(f);
 		} 
@@ -143,18 +177,54 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
 	    	String lo = "Longitude";
 	    	String al = "Altitude";
 	    	String text = "";
+	    	
 	    	while (in.hasNextLine())
 	    		s = in.nextLine();  	// s is always assigned to last (newest) line
+	    	
 	    	int posSpace = s.indexOf(",");
-	    	String lat = s.substring(0,posSpace);
+	    	String lat = s.substring(1,posSpace-1);
+	    	double latEnc = Double.parseDouble(lat) + .001;
+	    	lat = latEnc + "";
+	    	String latDataEnc = "";
+	    	
+	    	for (int n = 0; n < lat.length(); n++)
+	    	{
+	    		if (lat.substring(n,n+1).equals("."))
+	    			latDataEnc += "Point";
+	    		else if (lat.substring(n,n+1).equals("-"))
+	    			latDataEnc += "Minus";
+	    		else {
+	    			int number = Integer.parseInt(lat.substring(n,n+1));
+	    			latDataEnc += chosenEncoding.get(number) + " ";
+	    		}
+	    	}
+	    	
 	    	s = s.replace(s.substring(0,posSpace) + ",", "");
 	    	posSpace = s.indexOf(",");
-	    	String lon = s.substring(0, posSpace);
+	    	String lon = s.substring(1, posSpace-1);
+	    	double lonEnc = Double.parseDouble(lon) + .001;
+	    	lon = lonEnc + "";
+	    	String lonDataEnc = "";
+	    	
+	    	for (int n = 0; n < lon.length(); n++)
+	    	{
+	    		if (lon.substring(n,n+1).equals("."))
+	    			lonDataEnc += "Point";
+	    		else if (lon.substring(n,n+1).equals("-"))
+    				lonDataEnc += "Minus";
+	    		else {
+		    		int number = Integer.parseInt(lon.substring(n,n+1));
+		    		lonDataEnc += chosenEncoding.get(number);
+	    		}
+	    	}
+	    	
 	    	s = s.replace(s.substring(0,posSpace) + ",", "");
 	    	posSpace = s.indexOf(",");
 	    	String alt = s.substring(0, posSpace);
-	    	// Speaks "Longitude", "Lon. data", "Latitude", "Lat. data", "Altitude", "Alt. data"
-	    	text = la + lat + lo + lon + al + alt;
+	    	
+	    	// Speaks "Latitude", "Lat. data", "Longitude", "Lon. data", "Altitude", "Alt. data"
+	    	text = la + latDataEnc + lo + lonDataEnc + al + alt;
+	    	mTts.setSpeechRate((float) .7);
 	    	mTts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
 		}
 		else {}
