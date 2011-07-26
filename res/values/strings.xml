@@ -2,4 +2,5 @@
 <resources>
     <string name="hello">Hello World, Something Actually Worked Right!</string>
     <string name="app_name">AndroidSensorLogger</string>
+    <string name="camera_surface">CameraSurface</string>
 </resources>
