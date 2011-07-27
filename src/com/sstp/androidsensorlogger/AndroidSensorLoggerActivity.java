@@ -15,9 +15,6 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.hardware.Camera;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -31,12 +28,15 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
 	private TextView tv;
     private TextToSpeech mTts;
     private static final String TAG = "TextToSpeechDemo";
-    private final String[] encodedLetters = new String [] {
+    /* NATO Phonetics picked from this array:
+     * private final String[] encodedLetters = new String [] {
     "ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", "INDIA",
     "JULIET", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", "QUEBEC", "ROMEO", 
     "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", "X-RAY", "YANKEE", "ZULU"
     };
+    */
     private ArrayList<String> chosenEncoding = new ArrayList<String>();
+    private int speechCounter;
 
 	/** Called when the activity is first created. */
     @Override
@@ -48,7 +48,7 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this);
         tv.setText("Initializing...");
         mTts = new TextToSpeech(this, this);
-        takePic();
+        
         /* Used for determining which NATO Values to use
          * int choice = Integer.MIN_VALUE;
         Random rand = new Random();
@@ -57,7 +57,6 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         	chosenEncoding.add(encodedLetters[choice]);
         	}
          */
-        
         // These values were chosen:
         chosenEncoding.add("SIERRA");
         chosenEncoding.add("YANKEE");
@@ -69,12 +68,16 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         chosenEncoding.add("PAPA");
         chosenEncoding.add("KILO");
         chosenEncoding.add("MIKE");
+        
+        speechCounter = 0;
+        
+        takePic();
     }
      
     public void takePic()
     {	
-        CameraTimer ct = new CameraTimer();
-        new Timer().scheduleAtFixedRate(ct, 5000, 5000);
+        ToneTimer ct = new ToneTimer();
+        new Timer().scheduleAtFixedRate(ct, 10000, 10000);
     }
     
     public void onLocationChanged(Location arg0) {
@@ -82,8 +85,8 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
     	double lon1 = arg0.getLongitude();
     	double alt1 = arg0.getAltitude();
         String lat = String.format("%.5f",lat1); //lat is retrieved and rounded to 5 places
-        String lon = String.format("%.5f",lon1); //lon is retrieved
-        String alt = String.format("%.5f",alt1); //alt is retrieved
+        String lon = String.format("%.5f",lon1); //lon is retrieved and rounded to 5 places
+        String alt = String.format("%.5f",alt1); //alt is retrieved and rounded to 5 places
         tv.setText("lat="+lat+", lon="+lon + ", alt="+alt);
         SimpleDateFormat utc = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
         utc.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -91,9 +94,11 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         try {
 			// Writes the lat, lon, and alt every time a new location is observed.
         	SaveData(lat, lon, alt, utcTime, "LocationData.csv");
-        	// Speaks out new line
-        	speakData(new File(Environment.getExternalStorageDirectory()+"/LocationData.csv"));
-
+        	speechCounter++;
+        	if (speechCounter % 60 == 0) {
+        	// Speaks out every 60th new line
+        		speakData(new File(Environment.getExternalStorageDirectory()+"/LocationData.csv"));
+        	}
         } catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -164,6 +169,8 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
     
     public void speakData(File f)
     {
+    	// Speaks "Latitude", "Lat. data", "Longitude", "Lon. data", "Altitude", "Alt. data"
+    	ArrayList<String> data = new ArrayList<String>();
      	Scanner in = null;
 		try {
 			in = new Scanner(f);
@@ -171,61 +178,69 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
 		catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		if (!mTts.isSpeaking()) {
+		if (!mTts.isSpeaking()) {	  
 	    	String s = "";
 	    	String la = "Latitude";
 	    	String lo = "Longitude";
 	    	String al = "Altitude";
-	    	String text = "";
 	    	
 	    	while (in.hasNextLine())
 	    		s = in.nextLine();  	// s is always assigned to last (newest) line
 	    	
+	    	data.add(la);
 	    	int posSpace = s.indexOf(",");
 	    	String lat = s.substring(1,posSpace-1);
 	    	double latEnc = Double.parseDouble(lat) + .001;
-	    	lat = latEnc + "";
-	    	String latDataEnc = "";
+	    	lat = latEnc + "";	    	
 	    	
 	    	for (int n = 0; n < lat.length(); n++)
 	    	{
-	    		if (lat.substring(n,n+1).equals("."))
-	    			latDataEnc += "Point";
-	    		else if (lat.substring(n,n+1).equals("-"))
-	    			latDataEnc += "Minus";
+	    		if (lat.substring(n,n+1).equals(".")) {
+	    			data.add("Point");
+	    		}
+	    		else if (lat.substring(n,n+1).equals("-")){
+	    			data.add("Minus");
+	    		}
 	    		else {
 	    			int number = Integer.parseInt(lat.substring(n,n+1));
-	    			latDataEnc += chosenEncoding.get(number) + " ";
+	    			data.add(chosenEncoding.get(number) + " ");
 	    		}
 	    	}
 	    	
+	    	data.add(lo);
 	    	s = s.replace(s.substring(0,posSpace) + ",", "");
 	    	posSpace = s.indexOf(",");
 	    	String lon = s.substring(1, posSpace-1);
 	    	double lonEnc = Double.parseDouble(lon) + .001;
 	    	lon = lonEnc + "";
-	    	String lonDataEnc = "";
 	    	
 	    	for (int n = 0; n < lon.length(); n++)
 	    	{
-	    		if (lon.substring(n,n+1).equals("."))
-	    			lonDataEnc += "Point";
-	    		else if (lon.substring(n,n+1).equals("-"))
-    				lonDataEnc += "Minus";
+	    		if (lon.substring(n,n+1).equals(".")) {
+	    			data.add("Point");
+	    		}
+	    		else if (lon.substring(n,n+1).equals("-")) {
+	    			data.add("Minus");
+	    		}
 	    		else {
 		    		int number = Integer.parseInt(lon.substring(n,n+1));
-		    		lonDataEnc += chosenEncoding.get(number);
+	    			data.add(chosenEncoding.get(number) + " ");
 	    		}
 	    	}
 	    	
 	    	s = s.replace(s.substring(0,posSpace) + ",", "");
 	    	posSpace = s.indexOf(",");
-	    	String alt = s.substring(0, posSpace);
+	    	String alt = s.substring(0, posSpace);	
 	    	
-	    	// Speaks "Latitude", "Lat. data", "Longitude", "Lon. data", "Altitude", "Alt. data"
-	    	text = la + latDataEnc + lo + lonDataEnc + al + alt;
-	    	mTts.setSpeechRate((float) .7);
-	    	mTts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+	    	data.add(al);
+	    	data.add(alt);
+	    	
+	    	for (String g : data)
+	    	{
+		    	mTts.setSpeechRate((float) .7);
+	    		mTts.speak(g, TextToSpeech.QUEUE_ADD, null);
+	    		mTts.playSilence(500, TextToSpeech.QUEUE_ADD, null);
+	    	}
 		}
 		else {}
     }
