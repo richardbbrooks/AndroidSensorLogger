@@ -9,13 +9,16 @@ public class ToneTimer extends TimerTask {
 
 	public void run() {
 		AndroidSensorLoggerActivity asl = new AndroidSensorLoggerActivity();
-		while (true) {
 	    	if (asl.getCurrentUTCTime().compareTo(asl.getUTCTime()) >= 30 || 
 	    			asl.getCurrentUTCTime().compareTo(asl.getUTCTime()) == 1)
-	    		break;
+	    		playTone();
 	    	else {}
-		}
+	}
+	
+	public void playTone()
+	{
 		tg = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
 		tg.startTone(ToneGenerator.TONE_CDMA_HIGH_PBX_SLS);
+
 	}
 }
