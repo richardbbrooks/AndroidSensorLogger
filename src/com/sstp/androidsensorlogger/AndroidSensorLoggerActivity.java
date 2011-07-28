@@ -37,6 +37,7 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
     */
     private ArrayList<String> chosenEncoding = new ArrayList<String>();
     private int speechCounter;
+    private String time;
 
 	/** Called when the activity is first created. */
     @Override
@@ -69,15 +70,27 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         chosenEncoding.add("KILO");
         chosenEncoding.add("MIKE");
         
-        speechCounter = 0;
-        
+        speechCounter = 29;
         takePic();
     }
-     
+    
     public void takePic()
     {	
         ToneTimer ct = new ToneTimer();
-        new Timer().scheduleAtFixedRate(ct, 10000, 10000);
+        ct.run();
+    }
+    
+    public String getUTCTime()
+    {
+        return this.time;
+    }
+    
+    public String getCurrentUTCTime()
+    {
+        SimpleDateFormat utc = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
+        utc.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String utcTime = utc.format(new Date());
+        return utcTime;
     }
     
     public void onLocationChanged(Location arg0) {
@@ -91,11 +104,12 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         SimpleDateFormat utc = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
         utc.setTimeZone(TimeZone.getTimeZone("UTC"));
         String utcTime = utc.format(new Date());
+        this.time = utcTime;
         try {
 			// Writes the lat, lon, and alt every time a new location is observed.
         	SaveData(lat, lon, alt, utcTime, "LocationData.csv");
         	speechCounter++;
-        	if (speechCounter % 60 == 0) {
+        	if (speechCounter % 30 == 0) {
         	// Speaks out every 60th new line
         		speakData(new File(Environment.getExternalStorageDirectory()+"/LocationData.csv"));
         	}
