@@ -11,6 +11,11 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 import java.lang.Double;
 
+//import java.io.*;
+//import java.util.*;
+//import java.text.SimpleDateFormat;
+//import java.lang.Double;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -28,18 +33,9 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
 	private TextView tv;
     private TextToSpeech mTts;
     private static final String TAG = "TextToSpeechDemo";
-    /* NATO Phonetics picked from this array:
-     * private final String[] encodedLetters = new String [] {
-    "ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", "INDIA",
-    "JULIET", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", "QUEBEC", "ROMEO", 
-    "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", "X-RAY", "YANKEE", "ZULU"
-    };
-    */
-    
-    private ArrayList<String> chosenEncoding = new ArrayList<String>();
+	private ArrayList<String> chosenEncoding = new ArrayList<String>();
+	ArrayList<String> data = new ArrayList<String>();
     private int speechCounter;
-    private String time;
-
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,19 +43,10 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         setContentView(R.layout.main);
         tv = (TextView) findViewById(R.id.gpstext);
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, this);
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, this);
         tv.setText("Initializing...");
         mTts = new TextToSpeech(this, this);
-        
-        /* Used for determining which NATO Values to use
-         * int choice = Integer.MIN_VALUE;
-        Random rand = new Random();
-        for (int n = 0; n <= 9; n++) {
-        	choice = rand.nextInt(26);
-        	chosenEncoding.add(encodedLetters[choice]);
-        	}
-         */
-        // These values were chosen:
+        speechCounter = 89;
         chosenEncoding.add("SIERRA");
         chosenEncoding.add("YANKEE");
         chosenEncoding.add("ALPHA");
@@ -67,24 +54,9 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
         chosenEncoding.add("INDIA");
         chosenEncoding.add("QUEBEC");
         chosenEncoding.add("WHISKEY");
-        chosenEncoding.add("PAPA");
-        chosenEncoding.add("KILO");
+        chosenEncoding.add("NOVEMBER");
+        chosenEncoding.add("FOXTROT");
         chosenEncoding.add("MIKE");
-        
-        speechCounter = 29;
-        takePic();
-    }
-    
-    public void takePic()
-    {	
-        ToneTimer ct = new ToneTimer();
-        // Wait 10 minutes, then begin checking for lost gps service every 10 seconds
-        new Timer().scheduleAtFixedRate(ct , 600000, 10000);
-    }
-    
-    public String getUTCTime()
-    {
-        return this.time;
     }
     
     public String getCurrentUTCTime()
@@ -96,28 +68,98 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
     }
     
     public void onLocationChanged(Location arg0) {
-    	double lat1 = arg0.getLatitude();
-    	double lon1 = arg0.getLongitude();
-    	double alt1 = arg0.getAltitude();
-        String lat = String.format("%.5f",lat1); //lat is retrieved and rounded to 5 places
-        String lon = String.format("%.5f",lon1); //lon is retrieved and rounded to 5 places
-        String alt = String.format("%.5f",alt1); //alt is retrieved and rounded to 5 places
-        tv.setText("lat="+lat+", lon="+lon + ", alt="+alt);
-        SimpleDateFormat utc = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
-        utc.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String utcTime = utc.format(new Date());
-        this.time = utcTime;
-        try {
-			// Writes the lat, lon, and alt every time a new location is observed.
-        	SaveData(lat, lon, alt, utcTime, "LocationData.csv");
-        	speechCounter++;
-        	if (speechCounter % 30 == 0) {
-        	// Speaks out every 60th new line
-        		speakData(new File(Environment.getExternalStorageDirectory()+"/LocationData.csv"));
-        	}
-        } catch (Exception e) {
-			e.printStackTrace();
-		}
+    	speechCounter++;
+        String lat = String.valueOf(arg0.getLatitude());
+        String lon = String.valueOf(arg0.getLongitude());
+        String alt = String.valueOf(arg0.getAltitude());
+        
+        tv.setText("lat="+lat+", lon="+lon+" , alt="+alt+" , lcv="+speechCounter);
+        
+        if (speechCounter == 91){
+        	speechCounter = 0;
+        }
+        
+        if (speechCounter % 90 == 0) {
+        	//String la = "Latitude";
+    	    //String lo = "Longitude";
+    	    String al = "SWAG";
+    	    String SWAG = "SWAG";
+            
+    	    data.add(SWAG);
+    	    data.add(SWAG);
+    	    data.add(SWAG);
+            //data.add(la);
+            double latEnc = Math.round(Double.parseDouble(lat) * 100000.0)/100000.0;
+	    	lat = latEnc + "";	    	
+	    	
+	    	for (int n = 0; n < lat.length(); n++)
+	    	{
+	    		if (lat.substring(n,n+1).equals(".")) {
+	    			data.add("DECIMAL");
+	    		}
+	    		else if (lat.substring(n,n+1).equals("-")){
+	    			data.add("SWAG");
+	    		}
+	    		else {
+	    			int number = Integer.parseInt(lat.substring(n,n+1));
+	    			//data.add(number + " ");
+	    			data.add(chosenEncoding.get(number) + " ");
+	    		}
+	    	}
+	    	
+            //data.add(lo);
+            double lonEnc = Math.round(Double.parseDouble(lon) * 100000.0)/100000.0;
+	    	lon = lonEnc + "";
+	    	
+	    	for (int n = 0; n < lon.length(); n++)
+	    	{
+	    		if (lon.substring(n,n+1).equals(".")) {
+	    			data.add("DECIMAL");
+	    		}
+	    		else if (lon.substring(n,n+1).equals("-")) {
+	    			data.add("SWAG");
+	    		}
+	    		else {
+		    		int number = Integer.parseInt(lon.substring(n,n+1));
+	    			//data.add(number + " ");
+		    		data.add(chosenEncoding.get(number) + " ");
+	    		}
+	    	}
+            
+            data.add(al);
+            double altEnc = Math.round(Double.parseDouble(alt) * 100.0)/100.0;
+	    	alt = altEnc + "";
+            data.add(alt);
+            
+            for (String g : data)
+	    	{
+		    	mTts.setSpeechRate((float) .7);
+	    		mTts.speak(g, TextToSpeech.QUEUE_ADD, null);
+	    		mTts.playSilence(500, TextToSpeech.QUEUE_ADD, null);
+	    	}
+            data.clear();
+        }              
+    }
+    public void onDestroy() {
+        // Don't forget to shutdown!
+        if (mTts != null) {
+            mTts.stop();
+            mTts.shutdown();
+        }
+        super.onDestroy();
+    }
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            int result = mTts.setLanguage(Locale.US);
+            if (result == TextToSpeech.LANG_MISSING_DATA ||
+                result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e(TAG, "Language is not available.");
+            } else {
+    			//mTts.speak("No success.");
+            }
+        } else {
+            Log.e(TAG, "Could not initialize TextToSpeech.");
+        }
     }
     
     public void onProviderDisabled(String arg0) {
@@ -151,37 +193,6 @@ public class AndroidSensorLoggerActivity extends Activity implements LocationLis
 			e.printStackTrace();
 		}
 	}
-    
-    public void onDestroy() {
-        // Don't forget to shutdown!
-        if (mTts != null) {
-            mTts.stop();
-            mTts.shutdown();
-        }
-        super.onDestroy();
-    }
-    public void onInit(int status) {
-        // status can be either TextToSpeech.SUCCESS or TextToSpeech.ERROR.
-        if (status == TextToSpeech.SUCCESS) {
-            // Set preferred language to US english.
-            // Note that a language may not be available, and the result will indicate this.
-            int result = mTts.setLanguage(Locale.US);
-            // Try this someday for some interesting results.
-            // int result mTts.setLanguage(Locale.FRANCE);
-            if (result == TextToSpeech.LANG_MISSING_DATA ||
-                result == TextToSpeech.LANG_NOT_SUPPORTED) {
-               // Lanuage data is missing or the language is not supported.
-                Log.e(TAG, "Language is not available.");
-            } else {
-    			//mTts.speak("The following audio is GPS coordinates " +
-    				//		"from an android phone attached to a balloon made by Team SWAG!", 
-    					//	TextToSpeech.QUEUE_FLUSH, null);
-            }
-        } else {
-            // Initialization failed.
-            Log.e(TAG, "Could not initialize TextToSpeech.");
-        }
-    }
     
     public void speakData(File f)
     {

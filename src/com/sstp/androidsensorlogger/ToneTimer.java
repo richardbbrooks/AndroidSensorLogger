@@ -8,11 +8,11 @@ public class ToneTimer extends TimerTask {
 	ToneGenerator tg = null;
 
 	public void run() {
-		AndroidSensorLoggerActivity asl = new AndroidSensorLoggerActivity();
-	    	if (asl.getCurrentUTCTime().compareTo(asl.getUTCTime()) >= 30 || 
+		//AndroidSensorLoggerActivity asl = new AndroidSensorLoggerActivity();
+	    	/*if (asl.getCurrentUTCTime().compareTo(asl.getUTCTime()) >= 30 || 
 	    			asl.getCurrentUTCTime().compareTo(asl.getUTCTime()) == 1)
 	    		playTone();
-	    	else {}
+	    	else {}*/
 	}
 	
 	public void playTone()
